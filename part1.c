@@ -17,10 +17,20 @@ int conv2D(float* in, float* out, int data_size_X, int data_size_Y,
 					// only do the operation if not out of bounds
 					if(x+i>-1 && x+i<data_size_X && y+j>-1 && y+j<data_size_Y){
 						//Note that the kernel is flipped
-						//_mm_loadu_si128((kern_cent_X-i)+(kern_cent_Y-j)*KERNX);
-						//_mm_loadu_si128((x+i) + (y+j)*data_size_X);
-						out[x+y*data_size_X] += 
-								kernel[(kern_cent_X-i)+(kern_cent_Y-j)*KERNX] * in[(x+i) + (y+j)*data_size_X];
+						//__m128i in = _mm_setzero_si128();
+					        //__m128i sum = _mm_setzero_si128();
+						__m128 kern =  _mm_load_ps(kernel + ((kern_cent_X-i)+(kern_cent_Y-j)*KERNX));
+						__m128 in_temp =  _mm_loadu_ps(in + ((x+i) + (y+j)*data_size_X));
+						__m128 out_temp = _mm_loadu_ps(kernel + (x+y*data_size_X));
+						float final  = 0;
+						//__m128i noreason = _mm_setzero_si128();
+						kern = _mm_mul_ps(kern,in_temp);
+						out_temp = _mm_add_ps(kern, out_temp);
+						for (int a=0; a<4;a++){
+							final+= *(out+a);
+						}
+						out[x+y*data_size_X] = final;
+						//		kernel[(kern_cent_X-i)+(kern_cent_Y-j)*KERNX] * in[(x+i) + (y+j)*data_size_X]
 					}
 				}
 			}

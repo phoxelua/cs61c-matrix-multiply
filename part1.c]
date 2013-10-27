@@ -11,16 +11,36 @@ int conv2D(float* in, float* out, int data_size_X, int data_size_Y,
 	
 	//pad with zeros - GET REMAINDERS..meh later
 	int x_padding = (4 - (data_size_X % 4)) % 4; //how much we have to pad the rows to be a multiple of 4
+	//float newOut[];
 	int out_size_X = data_size_X + x_padding;
 	int out_size_Y = data_size_Y;
+	//float newOut[out_size_X * out_size_Y];
+	float* newOut;
+	if (x_padding == 0){
+		newOut =  out;
+	}
+	else {
+		//Padding the output matrix, also hella slow
+		//out_size_X = data_size_X + x_padding;
+		//out_size_Y = data_size_Y;
 		float newOut[out_size_X * out_size_Y];
+		printf("Original\n");
+		for(int i=0; i<data_size_X;i++){\
+			for(int j=0;j<data_size_Y;j++){
+				printf("%f ", out[i + j*data_size_X]);
+			}
+			printf("\n");
+		}
+		printf("\n");
+
+
 		//Copy out into newOut
 		for(int j = 0; j < out_size_Y; j++){
 			for(int i = 0; i < out_size_X; i+=4){
 				_mm_storeu_ps(newOut + i + j * out_size_X, _mm_loadu_ps(out + i + j*data_size_X));
 			}
 		}	
-
+		
 		//Pad out top/bototm rows with 0
 	 	for (int j=0; j<out_size_Y;j++){
 			//*(newOut + j*out_size_X) = 0;
@@ -35,6 +55,8 @@ int conv2D(float* in, float* out, int data_size_X, int data_size_Y,
 
 
 
+	}
+	
 	//	printf("x_padding %d\n", x_padding);
 	int new_size_X = data_size_X + 2 + x_padding;
 	int new_size_Y = data_size_Y + 2;
@@ -113,7 +135,9 @@ int conv2D(float* in, float* out, int data_size_X, int data_size_Y,
 	
 	
 	//Putting the new output matrix back into the original output matrix.
-
+	if (x_padding != 0){
+	printf("x_padding remainder copy loop\n");
+	printf("%d\n", x_padding);
 	for(int j = 0; j < data_size_Y; j++){
 		for(int i = 0; i < data_size_X/4*4; i+=4){
 			_mm_storeu_ps(out + i + j* data_size_X, _mm_loadu_ps(newOut + i + j* out_size_X));
@@ -125,6 +149,7 @@ int conv2D(float* in, float* out, int data_size_X, int data_size_Y,
 		for(int i = data_size_X/4*4; i < data_size_X; i++){
 			out[i + j* data_size_X] = newOut[i + j* out_size_X];
 		}
+	}
 	}
 
 

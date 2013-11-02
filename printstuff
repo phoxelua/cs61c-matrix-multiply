@@ -69,3 +69,14 @@ for (b=0;b<data_size_X;b++){
 }
 }
 */
+
+
+for (b=0;b<data_size_X;b++){
+	for(int a=0; a<data_size_Y;a++){
+		printf("%d %1.2f ", b + a*data_size_X, out[b + a*data_size_X]);
+}
+printf("\n");
+}
+printf("\n");
+
+

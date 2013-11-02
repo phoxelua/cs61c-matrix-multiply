@@ -371,8 +371,11 @@ else{ //not divisible by 4 case
 	}
 
 
+
+	
+	//printf("data sizes %d %d\n", data_size_X, data_size_Y);
 	for(int y = 0; y < data_size_Y; y++){ // the y coordinate of theoutput location we're focusing on
-		for(int x = data_size_X/4*4; x < data_size_X; x+=data_size_X){ // the x coordinate of the output location we're focusing on
+		for(int x = data_size_X/4*4; x < data_size_X; x++){ // the x coordinate of the output location we're focusing on
 	//printf("before %d %d %d  %f\n", x, y, x + y*data_size_X, out[x + y*data_size_X]);
 	//printf("%d %f \n", x + y*data_size_X, out[x + y*data_size_X]);
 			for(int i = -kern_cent_X; i <= kern_cent_X; i++){ // kernel unflipped x coordinate
@@ -383,6 +386,7 @@ else{ //not divisible by 4 case
 			}
 		}
 	}
+
 
 }
 	

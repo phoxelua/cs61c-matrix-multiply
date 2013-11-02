@@ -18,17 +18,18 @@ int new_size_Y = data_size_Y + 2;
 int new_size = new_size_X *new_size_Y;	
 
 float newIn[new_size];
+
 	int blocksize;
-	if (data_size_X == 400 && data_size_Y == 400){
+	if (data_size_X/100 == 4 && data_size_Y/100 == 4){
 		blocksize = 50;
 	}
-	else if (data_size_X == 400 && data_size_Y == 600){
+	else if (data_size_X/100 == 4 && data_size_Y/100 == 6){
 		blocksize = 20;
 	}
-	else if (data_size_X == 600 && data_size_Y == 400){
+	else if (data_size_X/100 == 6 && data_size_Y/100 == 4){
 		blocksize = 50;
 	}
-	else if (data_size_X == 1200 && data_size_Y == 1200){
+	else if (data_size_X/100 == 12 && data_size_Y/100 == 12){
 		blocksize = 150;
 	}
 	else{
@@ -39,7 +40,6 @@ float newIn[new_size];
      int a,b;
      int lnewx;
      int ldatax;
-    // int blocksize = 100;
     #pragma omp parallel for private(i,j,k,l,lnewx,ldatax) num_threads(8)
      for (j=0; j<data_size_Y; j+=blocksize){ 
      	for (i=0; i<data_size_X; i+=blocksize){ 
@@ -141,9 +141,8 @@ float newIn[new_size];
 		for(x = 0; x < data_size_X/4*4;x+=4){ // the x coordinate of the output location we're focusing on
 						//First
 						out_temp = _mm_loadu_ps(out+ (x+y*data_size_X));
-						//printf("after %d %d\n", x,y);
 						kern0 =  *(newKern + 0);
-						in_temp0 =  _mm_loadu_ps(newIn + ((x) + (y+1-kern_cent_Y)*new_size_X));
+						in_temp0 =  _mm_loadu_ps(newIn + x + (y+1-kern_cent_Y)*new_size_X);
 						mult0 = _mm_mul_ps(in_temp0,kern0);
 						out_temp = _mm_add_ps(out_temp, mult0);
 
@@ -206,11 +205,11 @@ float newIn[new_size];
 	for(y = 0; y < data_size_Y; y++){ // the y coordinate of theoutput location we're focusing on
 		for(x = data_size_X/4*4; x < data_size_X; x++){ // the x coordinate of the output location we're focusing on
 			temp = out[x+y*data_size_X];
-			for(j = -kern_cent_Y; j <= kern_cent_Y; j++){ // kernel unflipped y coordinate
-				for(i = -kern_cent_X; i <= kern_cent_X; i++){ // kernel unflipped x coordinate
-						temp += kernel[(kern_cent_X-i)+(kern_cent_Y-j)*KERNX] * newIn[(x+i+1) + (y+j+1)*new_size_X];
-				}
-			}
+			//for(j = -kern_cent_Y; j <= kern_cent_Y; j++){ // kernel unflipped y coordinate
+			//	for(i = -kern_cent_X; i <= kern_cent_X; i++){ // kernel unflipped x coordinate
+						temp += newKern[(kern_cent_X+i)+(kern_cent_Y+j)*KERNX][0] * newIn[(x+i+1) + (y+j+1)*new_size_X];
+			//	}
+			//}
 			out[x+y*data_size_X] = temp;
 		}
 	}

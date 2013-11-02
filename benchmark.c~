@@ -9,13 +9,13 @@
 //float kernel[] = { 0, -1, 0, 
 //                   -1, 4, -1, 
  //                  0, -1, 0 };
-float kernel[] = { 0, 3, 62	, 
-                   1, 4, -1, 
-                   12, 55, 8 };
+float kernel[] = { 0, 3, 6, 
+                   1, 4, 7, 
+                   2, 5, 8 };
 
 // Range of the values to be tested.
 //int minimum = 32, maximum = 401, step = 92;
-int minimum = 400, maximum = 1201, step = 200;
+int minimum = 400, maximum = 1201, step = 100;
 
 
 //==============================================================================

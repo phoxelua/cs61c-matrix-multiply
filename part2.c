@@ -18,84 +18,103 @@ int new_size_Y = data_size_Y + 2;
 int new_size = new_size_X *new_size_Y;	
 
 float newIn[new_size];
+	int blocksize;
+	if (data_size_X == 400 && data_size_Y == 400){
+		blocksize = 50;
+	}
+	else if (data_size_X == 400 && data_size_Y == 600){
+		blocksize = 20;
+	}
+	else if (data_size_X == 600 && data_size_Y == 400){
+		blocksize = 50;
+	}
+	else if (data_size_X == 1200 && data_size_Y == 1200){
+		blocksize = 150;
+	}
+	else{
+		blocksize = 100;
+	}
 
-//COPYING IN TO NEW IN////
      int i, j, k,l;
      int a,b;
-     int blocksize = 100;
-	//29-36 by block 100, omp, l+4, sse
-    #pragma omp parallel for private(i,j,k,l) num_threads(8)
+     int lnewx;
+     int ldatax;
+    // int blocksize = 100;
+    #pragma omp parallel for private(i,j,k,l,lnewx,ldatax) num_threads(8)
      for (j=0; j<data_size_Y; j+=blocksize){ 
      	for (i=0; i<data_size_X; i+=blocksize){ 
          for(l=j; l<j+blocksize && l<data_size_Y; l++){
+	     lnewx=(l+1)*new_size_X;
+	     ldatax=l*data_size_X;
             for(k=i; k<i+blocksize && k<data_size_X; k+=4){
-		_mm_storeu_ps(newIn + (k+1)+(l+1)*new_size_X, _mm_loadu_ps(in + k + l*data_size_X));
-                    //newIn[(k+1)+(l+1)*new_size_X] = in[k+l*data_size_X];
-     		  	
-		}
+		_mm_storeu_ps(newIn + (k+1)+lnewx, _mm_loadu_ps(in + k + ldatax));
+                    //newIn[(k+1)+(l+1)*new_size_X] = in[k+l*data_size_X];	  	
 	     }
+	  }
 	}
-	
      }	
 
-    // int a,b;
      if (data_size_X % blocksize != 0){
 	//printf("remainder loop X\n");
-	//printf("%d\n",data_size_X - data_size_X%blocksize); //seg fault when x=mod is 1-3
-	#pragma omp parallel for private(a,b) num_threads(8)
+	int bnsx, bdsx; 
+	int start = data_size_X - data_size_X%blocksize;
+	#pragma omp parallel for private(a,b,bnsx,bdsx) num_threads(8)
        for(b = 0; b < data_size_Y; b++){
-      		for(a = data_size_X - data_size_X%blocksize; a < data_size_X; a+=4){ 
-			_mm_storeu_ps(newIn + (a+1)+(b+1)*new_size_X, _mm_loadu_ps(in + a + b*data_size_X));
+		bnsx = (b+1)*new_size_X;
+		bdsx = b*data_size_X;
+      		for(a = start; a < data_size_X; a+=4){ 
+			_mm_storeu_ps(newIn + (a+1)+bnsx, _mm_loadu_ps(in + a + bdsx));
             		//newIn[(a+1) + (b+1)*new_size_X] = in[a + b*data_size_X];
 	  	}
 	}
      }
      if (data_size_Y % blocksize != 0){
 	//printf("remainder loop Y\n");
-	#pragma omp parallel for private(a,b) num_threads(8)
-        for(b = data_size_Y - data_size_Y%blocksize; b < data_size_Y; b++){
+	int bnsx, bdsx; 
+	int start = data_size_Y - data_size_Y%blocksize;
+	#pragma omp parallel for private(a,b,bnsx,bdsx) num_threads(8)
+        for(b = start; b < data_size_Y; b++){
+		bnsx = (b+1)*new_size_X;
+		bdsx = b*data_size_X;
       		for(a = 0; a < data_size_X; a+=4){
-			_mm_storeu_ps(newIn + (a+1)+(b+1)*new_size_X, _mm_loadu_ps(in + a + b*data_size_X));
+			_mm_storeu_ps(newIn + (a+1)+bnsx, _mm_loadu_ps(in + a + bdsx));
             		//newIn[(a+1) + (b+1)*new_size_X] = in[a + b*data_size_X];
 	  	}
 	}
      }
-	/*
-	//Copy in into newIn
-	float newIn[new_size];
-	for (int j=0; j<data_size_Y;j++){
-	 	for (int i=0; i<data_size_X;i+=4){
-	 		_mm_storeu_ps(newIn + i+1 + (j+1)*new_size_X, _mm_loadu_ps(in + i + j*data_size_X));
-	 	}
-	}
-	*/
 
 	//Padds left/right cols with zeros
 	float zeros[4] = {0,0,0,0};
-	 for (int i=0; i<new_size_X/4*4;){
+	int nsxnsy = new_size_X*(new_size_Y-1);
+	int end = new_size_X/4*4;
+	 for (int i=0; i<end;){
 		 _mm_storeu_ps(newIn + i, _mm_loadu_ps(zeros));
-		 _mm_storeu_ps(newIn + i + new_size_X*(new_size_Y-1), _mm_loadu_ps(zeros));
-		 //newIn[i] = 0;
-		 //newIn[i + new_size_X*(new_size_Y-1)] = 0;
+		 _mm_storeu_ps(newIn + i + nsxnsy, _mm_loadu_ps(zeros));
 		i+=4;
-	 
 	 }
 	 
 	//Pad leftover left/right  with zeros 
-	for (int i=new_size_X/4*4; i<new_size_X;i++){
-		 //_mm_storeu_ps(newIn + i, _mm_loadu_ps(zeros));
-		 newIn[i] = 0;
-		 newIn[i + new_size_X*(new_size_Y-1)] = 0;
+	#pragma omp parallel for private(i) num_threads(8) 
+	for (int i=end; i<new_size_X;i++){
+		*(newIn + i) = 0;
+		*(newIn + i + nsxnsy) = 0;
+		// newIn[i] = 0;
+		// newIn[i + nsxnsy] = 0;
 	 }
 
 	 //Pad newIn top/bottom rows with zeros
-	#pragma omp parallel for num_threads(8) 
-	for (int j=0; j<new_size_Y;j++){
-	 newIn[j*new_size_X] = 0;
-	 newIn[(new_size_X *(j+1)) - 1] = 0; 
-	 	for(int i=1;i<=x_padding; i++)
-		 newIn[(new_size_X *(j+1)) -1-i] = 0; 
+	int nsxj,nsxj1;
+	#pragma omp parallel for private(j,i) num_threads(8)
+	 for (int j=0; j<new_size_Y;j++){
+		 nsxj = new_size_X *j;
+		 nsxj1 = new_size_X *(j+1) - 1;
+		*(newIn + nsxj) = 0;
+		*(newIn + nsxj1) = 0;
+	 	for(int i=1;i<=x_padding; i++){
+			*(newIn - i + nsxj1) = 0;
+		}
 	 }
+
 
 	//Flip kernel
 	__m128 newKern[9];
@@ -109,13 +128,9 @@ float newIn[new_size];
 	newKern[7] = _mm_load1_ps(kernel  + 1);
 	newKern[8] =  _mm_load1_ps(kernel);
 
-///MAIN CONVOLUTION LOOP////
-// main convolution loop - REMAINDERS
-	int x = 0;
-	int y = 0;
+	///MAIN CONVOLUTION LOOP////
+	int x,y;
 	__m128 out_temp, kern0, kern1, kern2, kern3, kern4, kern5, kern6, kern7, kern8, mult0, mult1, mult2, in_temp0, in_temp1, in_temp2; 
-	//j = 0;
-	//i = 0;
 	//blocksize = 100;
 	#pragma omp parallel for  private(y,x,out_temp, kern0, kern1, kern2, kern3, kern4, kern5, kern6, kern7, kern8, mult0, mult1, mult2, in_temp0, in_temp1, in_temp2) num_threads(8)
 	//for (j=1;j<new_size_Y-1;j+=blocksize){
@@ -123,10 +138,7 @@ float newIn[new_size];
 	//for(y = j; y<j+blocksize && y < new_size_Y-1; y++){ // the y coordinate of theoutput location we're focusing on
 	//	for(x = i; x<i+blocksize && x < new_size_X-1;x+=4){ // the x coordinate of the output location we're focusing on
 	for(y = 0; y < data_size_Y; y++){ // the y coordinate of theoutput location we're focusing on
-		//printf("ds %d\n", data_size_X/4*4);
 		for(x = 0; x < data_size_X/4*4;x+=4){ // the x coordinate of the output location we're focusing on
-	          //for(j = -kern_cent_Y; j <= kern_cent_Y; j++){ // kernel flipped y coordinate      
-                        	//for(i = -kern_cent_X; i <= kern_cent_X; i+=3){ // kernel flipped x coordinate
 						//First
 						out_temp = _mm_loadu_ps(out+ (x+y*data_size_X));
 						//printf("after %d %d\n", x,y);
@@ -182,31 +194,27 @@ float newIn[new_size];
 						out_temp = _mm_add_ps(out_temp, mult2);
 
 						_mm_storeu_ps(out +(x)+(y)*data_size_X, out_temp);
-
-
 		}
 	}
 
 
 
-	
-	//printf("data sizes %d %d\n", data_size_X, data_size_Y);
-	for(int y = 0; y < data_size_Y; y++){ // the y coordinate of theoutput location we're focusing on
-		for(int x = data_size_X/4*4; x < data_size_X; x++){ // the x coordinate of the output location we're focusing on
-	//printf("before %d %d %d  %f\n", x, y, x + y*data_size_X, out[x + y*data_size_X]);
-	//printf("%d %f \n", x + y*data_size_X, out[x + y*data_size_X]);
-			for(int i = -kern_cent_X; i <= kern_cent_X; i++){ // kernel unflipped x coordinate
-				for(int j = -kern_cent_Y; j <= kern_cent_Y; j++){ // kernel unflipped y coordinate
-						out[x+y*data_size_X] += 
-								kernel[(kern_cent_X-i)+(kern_cent_Y-j)*KERNX] * newIn[(x+i+1) + (y+j+1)*new_size_X];
+
+	///REMAINDER CONVOLUTION LOOP////
+	float temp;
+	#pragma omp parallel for private(y,x,i,j,temp) num_threads(8)
+	for(y = 0; y < data_size_Y; y++){ // the y coordinate of theoutput location we're focusing on
+		for(x = data_size_X/4*4; x < data_size_X; x++){ // the x coordinate of the output location we're focusing on
+			temp = out[x+y*data_size_X];
+			for(j = -kern_cent_Y; j <= kern_cent_Y; j++){ // kernel unflipped y coordinate
+				for(i = -kern_cent_X; i <= kern_cent_X; i++){ // kernel unflipped x coordinate
+						temp += kernel[(kern_cent_X-i)+(kern_cent_Y-j)*KERNX] * newIn[(x+i+1) + (y+j+1)*new_size_X];
 				}
 			}
+			out[x+y*data_size_X] = temp;
 		}
 	}
 
-
-
-	
 	return 1;
 
-}
+}	

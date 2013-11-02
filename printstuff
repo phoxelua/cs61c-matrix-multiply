@@ -1,0 +1,71 @@
+/*
+	float newKern[KERNX*KERNY];
+	//newKern = (float*) calloc(9, sizeof(float));
+	for(int j=0; j<KERNY; j++){
+		for (int i=0; i<KERNX;i++){
+			*(newKern + (KERNX-1-i) + (KERNY-1-j)*KERNX) = *(kernel + i + j*KERNX);
+		}
+	}
+*/
+
+/*
+float test[9];
+test[0] = 0;
+test[1] = 1;
+test[2] = 2;
+test[3] = 3;
+test[4] = 4;
+test[5] = 5;
+test[6] = 6;
+test[7] = 7;
+test[8] = 8;
+test[9] = 9;
+test[10] = 10;
+test[11] = 11;
+test[12] = 12;
+test[13] = 13;
+test[14] = 14;
+test[15] = 15;
+test[16] = 16;
+test[17] = 17;
+test[18] = 18;
+test[19] = 19;
+test[20] = 20;
+test[21] = 21;
+test[22] = 22;
+test[23] = 23;
+test[24] = 24;
+test[25] = 25;
+test[26] = 26;
+test[28] = 28;
+test[29] = 29;
+test[30] = 30;
+test[31] = 31;
+test[32] = 32;
+test[33] = 33;
+test[34] = 34;
+
+for (b=0;b<data_size_X;b++){
+	for(int a=0; a<data_size_Y;a++){
+		printf("%d %f ", b + a*data_size_X, out[b + a*data_size_X]);
+}
+printf("\n");
+}
+printf("\n");
+
+
+__m128 load = _mm_load_ps(test + 5);
+printf("%f ", load[0]);
+printf("%f ",  load[1]);
+printf("%f ",  load[2]);
+
+printf("%f ",  load[3]);
+
+
+float* newOut = (float*) calloc(data_size_X*data_size_Y, sizeof(float));
+for (b=0;b<data_size_X;b++){
+	for(int a=0; a<data_size_Y;a++){
+		 new[b + a*data_size_X]= out[b + a*data_size_X];
+}
+}
+*/
